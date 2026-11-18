@@ -349,8 +349,9 @@ const sub=()=>S.cart.reduce((a,c)=>a+c.qty*c.price,0);
 const slice='<svg viewBox="0 0 24 24"><use href="#sl"/></svg>';
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),1900)}
 function go(t){S.tab=t;S.view=null;render();$('#body').scrollTop=0}
-function open(v){S.view=v;render();$('#body').scrollTop=0}
+function openView(v){S.view=v;render();$('#body').scrollTop=0}
 function add(id){const m=find(id),e=S.cart.find(c=>c.key===id);e?e.qty++:S.cart.push({key:id,name:m.name,price:m.price,qty:1,detail:''});toast(m.name+' added');tabs()}
+function bUpd(){const p=bPrice();$('#bArt').innerHTML=art({shape:'pie',tops:[...S.B.tops]},'build');$('#bPrice').textContent=money(p);$('#bQty').textContent=S.B.qty;$('#bAdd').textContent=`Add ${S.B.qty} to order · ${money(p*S.B.qty)}`;$('#bTopL').textContent=`2 · Toppings · ${money(SIZES[S.B.size].top)} each`}
 function bPrice(){const z=SIZES[S.B.size];return z.base+z.top*S.B.tops.size}
 function slots(){const o=['ASAP'],d=new Date();d.setSeconds(0,0);d.setMinutes(Math.ceil((d.getMinutes()+20)/15)*15);for(let i=0;i<8;i++){o.push(d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}));d.setMinutes(d.getMinutes()+15)}return o}
 const holes=n=>`<div class="holes">${Array.from({length:10},(_,i)=>i===9?'<div class="hole free">FREE</div>':`<div class="hole ${i<n?'on':''}">${i<n?slice:i+1}</div>`).join('')}</div>`;
@@ -384,18 +385,18 @@ menu(){return `
  <div class="topbar" style="padding-bottom:6px"><div><p class="kick">Menu</p><h1 class="d" style="font-size:32px">Pick Your Slice</h1></div></div>
  <div class="cats">${CATS.map(c=>`<button class="${S.cat===c?'on':''}" onclick="S.cat='${c}';render()">${c}</button>`).join('')}</div>
  <div style="height:12px"></div>
- <button class="byo" onclick="open('build')">${art({shape:'pie',tops:['pep','mush','basil']},'byo')}<span><b>Build Your Own Pizza</b><small>Pick a size and toppings. Price updates live.</small></span><span style="font-size:22px">›</span></button>
+ <button class="byo" onclick="openView('build')">${art({shape:'pie',tops:['pep','mush','basil']},'byo')}<span><b>Build Your Own Pizza</b><small>Pick a size and toppings. Price updates live.</small></span><span style="font-size:22px">›</span></button>
  ${M.filter(m=>m.cat===S.cat).map(m=>`<div class="row"><div class="ra">${art(m.art,m.id)}</div><div><b>${m.name}</b> ${m.tag?`<span class="tag ${m.cat==='Deals'?'o':''}">${m.tag}</span>`:''}<p>${m.desc}</p><span class="price">${money(m.price)}</span></div><button class="add" onclick="add('${m.id}')" aria-label="Add ${m.name}">+</button></div>`).join('')}
  <div style="height:16px"></div>`},
 
 build(){const z=SIZES[S.B.size],p=bPrice();return `
- <div class="bprev"><button class="back" style="position:absolute;top:10px;left:14px" onclick="S.view=null;render()" aria-label="Back">‹</button><div id="bArt">${art({shape:'pie',tops:[...S.B.tops]},'build')}</div><div class="bp"><small>Your pie</small><b>${money(p)}</b></div></div>
+ <div class="bprev"><button class="back" style="position:absolute;top:10px;left:14px" onclick="S.view=null;render()" aria-label="Back">‹</button><div id="bArt">${art({shape:'pie',tops:[...S.B.tops]},'build')}</div><div class="bp"><small>Your pie</small><b id="bPrice">${money(p)}</b></div></div>
  <div class="pad"><p class="kick" style="margin-top:16px">Build your own</p><h1 class="d" style="font-size:30px">Make It Yours</h1>
-  <span class="bl">1 · Size</span><div class="seg">${Object.entries(SIZES).map(([k,s])=>`<label class="opt"><input type="radio" name="bs" id="bs${k}" ${S.B.size===k?'checked':''} onchange="S.B.size='${k}';render()"><span>${s.n}<small>${s.note} · ${money(s.base)}</small></span></label>`).join('')}</div>
-  <span class="bl">2 · Toppings · ${money(z.top)} each</span><div class="tops">${TOPS.map(([k,n])=>`<label class="opt"><input type="checkbox" id="bt-${k}" ${S.B.tops.has(k)?'checked':''} onchange="this.checked?S.B.tops.add('${k}'):S.B.tops.delete('${k}');render()"><span>${n}</span></label>`).join('')}</div>
-  <span class="bl">3 · Quantity</span><div class="qty"><button onclick="S.B.qty=Math.max(1,S.B.qty-1);render()" aria-label="Fewer">−</button><b>${S.B.qty}</b><button onclick="S.B.qty++;render()" aria-label="More">+</button></div>
+  <span class="bl">1 · Size</span><div class="seg">${Object.entries(SIZES).map(([k,s])=>`<label class="opt"><input type="radio" name="bs" id="bs${k}" ${S.B.size===k?'checked':''} onchange="S.B.size='${k}';bUpd()"><span>${s.n}<small>${s.note} · ${money(s.base)} · toppings ${money(s.top)}</small></span></label>`).join('')}</div>
+  <span class="bl" id="bTopL">2 · Toppings · ${money(z.top)} each</span><div class="tops">${TOPS.map(([k,n])=>`<label class="opt"><input type="checkbox" id="bt-${k}" ${S.B.tops.has(k)?'checked':''} onchange="this.checked?S.B.tops.add('${k}'):S.B.tops.delete('${k}');bUpd()"><span>${n}</span></label>`).join('')}</div>
+  <span class="bl">3 · Quantity</span><div class="qty"><button onclick="S.B.qty=Math.max(1,S.B.qty-1);bUpd()" aria-label="Fewer">−</button><b id="bQty">${S.B.qty}</b><button onclick="S.B.qty++;bUpd()" aria-label="More">+</button></div>
  </div>
- <div class="sticky"><button class="btn full" onclick="addBuild()">Add ${S.B.qty} to order · ${money(p*S.B.qty)}</button></div>`},
+ <div class="sticky"><button class="btn full" id="bAdd" onclick="addBuild()">Add ${S.B.qty} to order · ${money(p*S.B.qty)}</button></div>`},
 
 order(){
  if(S.placed){const p=S.placed;return `<div class="conf"><p class="kick" style="justify-content:center">Order confirmed</p><div class="code">#${p.no}</div><b>Ready ${p.time}</b><div style="color:var(--muted);font-size:13px;margin-top:4px">${p.items} item${p.items>1?'s':''} · ${money(p.total)} · ${p.pay}</div>
@@ -462,7 +463,7 @@ function miniMap(){return `<svg viewBox="0 0 340 230" role="img" aria-label="Ill
  </g></svg>`}
 function mi(n){$('#mapinfo').innerHTML=n==='The Slice Spot'?'<b>The Slice Spot</b> · Hurricane Food Court, University of Miami.':`<b>${n}</b> · Walking time to the Hurricane Food Court: TBD.`}
 function q(i,d){S.cart[i].qty+=d;if(S.cart[i].qty<=0)S.cart.splice(i,1);render()}
-function addBuild(){const z=SIZES[S.B.size],n=TOPS.filter(t=>S.B.tops.has(t[0])).map(t=>t[1]);S.cart.push({key:'b'+Date.now(),name:'Build Your Own · '+z.n,price:bPrice(),qty:S.B.qty,detail:n.length?n.join(', '):'Cheese only'});toast('Custom pie added to your order');S.view=null;S.tab='order';render();$('#body').scrollTop=0}
+function addBuild(){const z=SIZES[S.B.size],n=TOPS.filter(t=>S.B.tops.has(t[0])).map(t=>t[1]);S.cart.push({key:'b'+Date.now(),name:'Build Your Own · '+z.n,price:bPrice(),qty:S.B.qty,detail:n.length?n.join(', '):'Cheese only'});toast('Your custom pie was added');tabs()}
 function place(){if(!S.cart.length)return;const name=($('#oname').value||'').trim()||'Guest',sl=slots(),pts=S.cart.filter(c=>!/drink|water/i.test(c.name)).reduce((a,c)=>a+c.qty,0);
  S.placed={no:'SS-'+(1000+Math.floor(Math.random()*9000)),time:S.slot?'at '+sl[S.slot]:'in about 10–15 min',items:count(),total:sub()*1.07,pay:S.pay,punches:pts};
  S.member.punches+=pts;S.cart=[];render();$('#body').scrollTop=0;toast('Order placed, '+name)}
